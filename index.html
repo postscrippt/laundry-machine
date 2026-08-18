@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f8f3" />
+  <title>LaundryQ — Know before you go</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar" id="topbar">
+      <button class="icon-button back-button hidden" id="backButton" aria-label="Go back">←</button>
+      <a class="brand" href="#" data-route="home"><span class="brand-mark">LQ</span><span>LaundryQ</span></a>
+      <div class="top-actions">
+        <button class="icon-button" id="adminButton" aria-label="Admin dashboard" title="Admin dashboard">⌘</button>
+        <button class="avatar" data-route="profile" aria-label="Profile">PK</button>
+      </div>
+    </header>
+
+    <main id="app" aria-live="polite"></main>
+
+    <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+      <button data-route="home" class="nav-item active"><span>⌂</span><small>Home</small></button>
+      <button data-route="nearby" class="nav-item"><span>⌖</span><small>Nearby</small></button>
+      <button data-route="my-laundry" class="nav-item"><span>◫</span><small>My Laundry</small></button>
+      <button data-route="notifications" class="nav-item"><span>♢</span><small>Updates</small><i class="nav-dot"></i></button>
+      <button data-route="profile" class="nav-item"><span>○</span><small>Profile</small></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
