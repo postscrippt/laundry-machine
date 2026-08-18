@@ -43,7 +43,7 @@ function locationCard(loc) {
 
 const screens = {
   welcome: () => `<section class="login-screen">
-    <div class="brand"><span class="brand-mark">LQ</span><span>LaundryQ</span></div>
+    <div class="brand"><span class="brand-mark">sQ</span><span>sPinnyQ</span></div>
     <div><div class="login-visual"><div class="bubble"><strong>No waiting.</strong></div></div>
       <div class="login-copy"><p class="eyebrow">Know before you go</p><h1>Make laundry fit your day.</h1><p>See what’s free, join the queue, and get notified when it’s your turn.</p></div></div>
     <button class="btn btn-lime btn-block" data-action="enter">Get started <span>→</span></button>
