@@ -78,6 +78,7 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .btn-block { width: 100%; }
 .action-stack { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.queue-actions { margin-top: 16px; }
 .machine-card .btn { min-height: 38px; border-radius: 12px; }
 .machine-detail { color: var(--muted); font-size: 13px; margin-top: 9px; }
 .machine-arrow { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 11px; background: var(--gray-soft); display: grid; place-items: center; font-weight: 700; }
@@ -282,6 +283,7 @@ td select { border: 1px solid var(--line); border-radius: 9px; padding: 6px; bac
   .screen.center { max-width: 760px; }
   .screen.center .btn-block { margin-left: auto; margin-right: auto; }
   .screen.center .action-stack { max-width: 460px; margin-left: auto; margin-right: auto; }
+  .queue-actions { max-width: 460px; }
   .washer-art { width: 180px; height: 180px; }
 
   .summary-grid { grid-template-columns: repeat(4,1fr); }
