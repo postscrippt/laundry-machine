@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">sPinnyQ logo</title>
+  <rect width="64" height="64" rx="19" fill="#17211b"/>
+  <circle cx="32" cy="33" r="19" fill="#dff471"/>
+  <circle cx="32" cy="33" r="12" fill="#294538"/>
+  <path d="M23.5 32.8c3.9-6.9 12.4-8.6 18.4-3.4-2.5-.3-4.7.6-6.2 2.4-2.3 2.8-2.1 6.8.2 9.4-6.3 1.6-12.4-2.4-12.4-8.4Z" fill="#7fd3a4"/>
+  <circle cx="48" cy="15" r="5" fill="#ffffff"/>
+</svg>

@@ -1,7 +1,7 @@
 const locations = [
-  { id: 'dorm-a', name: 'University Dorm A', distance: '120 m', available: 0, total: 9, queue: 3, wait: 18, open: true },
-  { id: 'campus', name: 'Campus Residence', distance: '450 m', available: 3, total: 12, queue: 1, wait: 8, open: true },
-  { id: 'easywash', name: 'EasyWash Student Laundry', distance: '900 m', available: 0, total: 16, queue: 4, wait: 24, open: true }
+  { id: 'dorm-a', name: 'University Dorm A', shortName: 'Dorm A', address: 'Building A, ground floor', distance: '120 m', available: 1, total: 9, queue: 3, wait: 18, hours: 'Open until 11:00 PM', open: true },
+  { id: 'campus', name: 'Campus Residence Laundry', shortName: 'Campus Residence', address: 'Residence Hall, level 1', distance: '450 m', available: 3, total: 12, queue: 1, wait: 8, hours: 'Open 24 hours', open: true },
+  { id: 'easywash', name: 'EasyWash Student Laundry', shortName: 'EasyWash', address: '18 University Road', distance: '900 m', available: 0, total: 16, queue: 4, wait: 24, hours: 'Open until midnight', open: true }
 ];
 
 const machines = [
@@ -16,10 +16,32 @@ const machines = [
   { id: 9, name: 'Dryer 3', type: 'dryer', status: 'reserved', detail: 'Reserved until 7:30 PM' }
 ];
 
+const locationMachines = {
+  'dorm-a': machines,
+  campus: [
+    { id: 101, name: 'Washer 1', type: 'washer', status: 'available', detail: 'Ready now' },
+    { id: 102, name: 'Washer 2', type: 'washer', status: 'occupied', detail: '9 min remaining · next at 7:17 PM' },
+    { id: 103, name: 'Washer 3', type: 'washer', status: 'available', detail: 'Ready now' },
+    { id: 104, name: 'Washer 4', type: 'washer', status: 'reserved', detail: 'Reserved until 7:30 PM' },
+    { id: 105, name: 'Washer 5', type: 'washer', status: 'occupied', detail: '26 min remaining · next at 7:34 PM' },
+    { id: 106, name: 'Washer 6', type: 'washer', status: 'occupied', detail: '14 min remaining · next at 7:22 PM' },
+    { id: 107, name: 'Washer 7', type: 'washer', status: 'maintenance', detail: 'Service expected tomorrow' },
+    { id: 108, name: 'Washer 8', type: 'washer', status: 'occupied', detail: '33 min remaining · next at 7:41 PM' },
+    { id: 109, name: 'Dryer 1', type: 'dryer', status: 'available', detail: 'Ready now' },
+    { id: 110, name: 'Dryer 2', type: 'dryer', status: 'occupied', detail: '11 min remaining' },
+    { id: 111, name: 'Dryer 3', type: 'dryer', status: 'reserved', detail: 'Reserved until 7:25 PM' },
+    { id: 112, name: 'Dryer 4', type: 'dryer', status: 'occupied', detail: '19 min remaining' }
+  ],
+  easywash: [
+    ...Array.from({ length: 10 }, (_, i) => ({ id: 201 + i, name: `Washer ${i + 1}`, type: 'washer', status: i === 7 ? 'maintenance' : i === 3 || i === 8 ? 'reserved' : 'occupied', detail: i === 7 ? 'Temporarily out of service' : i === 3 || i === 8 ? `Reserved until ${i === 3 ? '7:30' : '8:15'} PM` : `${12 + i * 3} min remaining` })),
+    ...Array.from({ length: 6 }, (_, i) => ({ id: 211 + i, name: `Dryer ${i + 1}`, type: 'dryer', status: i === 4 ? 'maintenance' : i === 2 ? 'reserved' : 'occupied', detail: i === 4 ? 'Maintenance in progress' : i === 2 ? 'Reserved until 7:45 PM' : `${8 + i * 4} min remaining` }))
+  ]
+};
+
 const state = {
-  route: 'welcome', previous: 'home', machineTab: 'washer', joinedQueue: false, claimReady: false,
+  route: 'welcome', history: [], selectedLocationId: 'dorm-a', machineTab: 'washer', selectedMachineId: 1, joinedQueue: false, claimReady: false,
   selectedMachine: 'Washer 4', selectedSlot: '8:15 PM – 9:00 PM', booking: null,
-  sessionSeconds: 38 * 60 + 42, sessionStarted: false, warnings: 1, adminTab: 'machines'
+  paymentMethod: null, sessionSeconds: 38 * 60 + 42, sessionStarted: false, warnings: 1, adminTab: 'machines'
 };
 
 const app = document.querySelector('#app');
@@ -27,6 +49,8 @@ const topbar = document.querySelector('#topbar');
 const bottomNav = document.querySelector('#bottomNav');
 const backButton = document.querySelector('#backButton');
 const esc = value => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const selectedLocation = () => locations.find(location => location.id === state.selectedLocationId) || locations[0];
+const selectedMachines = () => locationMachines[state.selectedLocationId] || machines;
 
 function statusLabel(status) {
   return { available: 'Available', occupied: 'In use', reserved: 'Reserved', maintenance: 'Maintenance' }[status] || status;
@@ -43,7 +67,7 @@ function locationCard(loc) {
 
 const screens = {
   welcome: () => `<section class="login-screen">
-    <div class="brand"><span class="brand-mark">sQ</span><span>sPinnyQ</span></div>
+    <div class="brand"><img class="brand-logo" src="spinnyq-logo.svg" alt="" /><span>sPinnyQ</span></div>
     <div><div class="login-visual"><div class="bubble"><strong>No waiting.</strong></div></div>
       <div class="login-copy"><p class="eyebrow">Know before you go</p><h1>Make laundry fit your day.</h1><p>See what’s free, join the queue, and get notified when it’s your turn.</p></div></div>
     <button class="btn btn-lime btn-block" data-action="enter">Get started <span>→</span></button>
@@ -61,38 +85,42 @@ const screens = {
     <div class="map"><div class="pin one" data-location="dorm-a"><span>A</span></div><div class="pin two" data-location="campus"><span>B</span></div><div class="pin three" data-location="easywash"><span>E</span></div></div>
     <div class="location-list">${locations.map(locationCard).join('')}</div></section>`,
 
-  room: () => `<section class="screen"><p class="eyebrow">Open until 11:00 PM</p><h1>University Dorm A</h1><p class="subtle">Building A, ground floor · 120 m away</p>
-    <div class="room-hero"><span class="subtle">Current wait</span><div class="big-number">~18 min</div><div class="room-stats"><div class="room-stat"><strong>0 / 6</strong><span>Washers free</span></div><div class="room-stat"><strong>1 / 3</strong><span>Dryers free</span></div><div class="room-stat"><strong>3</strong><span>In queue</span></div></div></div>
-    <button class="btn btn-primary btn-block" data-action="join-queue">${state.joinedQueue ? 'View your queue' : 'Join washer queue · 18 min'}</button>
+  room: () => { const location=selectedLocation(), roomMachines=selectedMachines(), washers=roomMachines.filter(m=>m.type==='washer'), dryers=roomMachines.filter(m=>m.type==='dryer'); return `<section class="screen"><p class="eyebrow">${location.hours}</p><h1>${location.name}</h1><p class="subtle">${location.address} · ${location.distance} away</p>
+    <div class="room-hero"><span class="subtle">Current wait</span><div class="big-number">~${location.wait} min</div><div class="room-stats"><div class="room-stat"><strong>${washers.filter(m=>m.status==='available').length} / ${washers.length}</strong><span>Washers free</span></div><div class="room-stat"><strong>${dryers.filter(m=>m.status==='available').length} / ${dryers.length}</strong><span>Dryers free</span></div><div class="room-stat"><strong>${location.queue}</strong><span>In queue</span></div></div></div>
+    <button class="btn btn-primary btn-block" data-action="join-queue">${state.joinedQueue ? 'View your queue' : `Join washer queue · ${location.wait} min`}</button>
     <div class="tabs"><button class="tab ${state.machineTab==='washer'?'active':''}" data-tab="washer">Washers</button><button class="tab ${state.machineTab==='dryer'?'active':''}" data-tab="dryer">Dryers</button></div>
-    <div class="machine-list">${machines.filter(m=>m.type===state.machineTab).map(machineCard).join('')}</div>
+    <div class="machine-list">${roomMachines.filter(m=>m.type===state.machineTab).map(machineCard).join('')}</div>
     <div class="section-head"><h2>Plan ahead</h2></div><button class="btn btn-soft btn-block" ${state.warnings >= 3 ? 'disabled' : 'data-route="book"'}>${state.warnings >= 3 ? 'Booking suspended for 7 days' : 'Book a future slot'}</button>
-  </section>`,
+  </section>`; },
 
-  queue: () => state.claimReady ? claimScreen() : `<section class="screen"><p class="eyebrow">University Dorm A</p><h1>You’re in the queue</h1><p class="subtle">We’ll notify you when a washer is ready.</p>
+  machine: () => machineDetailScreen(),
+
+  queue: () => state.claimReady ? claimScreen() : `<section class="screen"><p class="eyebrow">${selectedLocation().name}</p><h1>You’re in the queue</h1><p class="subtle">We’ll notify you when a washer is ready.</p>
     <div class="plain-card center"><div class="queue-position"><div><small>Position</small><strong>#3</strong></div></div><h2>About 24 minutes</h2><p class="subtle">Feel free to leave. We’ll keep your place.</p></div>
     <div class="section-head"><h2>Queue progress</h2><span class="subtle">3 people</span></div><div class="plain-card"><div class="queue-line"><span class="queue-num">1</span><span>Next person</span><span class="subtle">~8 min</span></div><div class="queue-line"><span class="queue-num">2</span><span>Waiting</span><span class="subtle">~16 min</span></div><div class="queue-line you"><span class="queue-num">3</span><span>You</span><span>~24 min</span></div></div>
     <button class="btn btn-lime btn-block" style="margin-top:16px" data-action="simulate-ready">Simulate machine available</button><button class="btn btn-danger btn-block" style="margin-top:9px" data-action="leave-queue">Leave queue</button></section>`,
 
-  book: () => `<section class="screen"><p class="eyebrow">University Dorm A</p><h1>Book a washer</h1><p class="subtle">Choose an available future slot.</p>
-    <label class="form-label" for="machineSelect">Machine</label><select class="select" id="machineSelect"><option>Washer 2</option><option>Washer 3</option><option selected>Washer 4</option><option>Washer 6</option></select>
+  book: () => `<section class="screen"><p class="eyebrow">${selectedLocation().name}</p><h1>Book a washer</h1><p class="subtle">Choose an available future slot.</p>
+    <label class="form-label" for="machineSelect">Machine</label><select class="select" id="machineSelect">${selectedMachines().filter(m=>m.type==='washer').map(m=>`<option ${state.selectedMachine===m.name?'selected':''}>${m.name}</option>`).join('')}</select>
     <label class="form-label">Today, August 18</label><div class="slots">${['6:00 PM – 6:45 PM','6:45 PM – 7:30 PM','7:30 PM – 8:15 PM','8:15 PM – 9:00 PM','9:00 PM – 9:45 PM'].map(s=>`<button class="slot ${state.selectedSlot===s?'selected':''}" data-slot="${s}">${s}</button>`).join('')}</div>
     <div class="notice">You’ll have 5 minutes from your booking time to scan the QR code on the washer.</div><button class="btn btn-primary btn-block" data-action="confirm-booking">Confirm booking</button></section>`,
 
   confirmation: () => `<section class="screen center"><div class="success-mark">✓</div><p class="eyebrow">Booking confirmed</p><h1>You’re all set.</h1><p class="subtle">We’ll remind you 10 minutes before your slot.</p>
-    <div class="plain-card" style="text-align:left;margin:25px 0"><div class="row"><span class="subtle">Location</span><strong>University Dorm A</strong></div><div class="row" style="margin-top:14px"><span class="subtle">Machine</span><strong>${esc(state.booking?.machine || 'Washer 4')}</strong></div><div class="row" style="margin-top:14px"><span class="subtle">Time</span><strong>${esc(state.booking?.slot || state.selectedSlot)}</strong></div></div>
+    <div class="plain-card" style="text-align:left;margin:25px 0"><div class="row"><span class="subtle">Location</span><strong>${esc(state.booking?.location || selectedLocation().name)}</strong></div><div class="row" style="margin-top:14px"><span class="subtle">Machine</span><strong>${esc(state.booking?.machine || 'Washer 4')}</strong></div><div class="row" style="margin-top:14px"><span class="subtle">Time</span><strong>${esc(state.booking?.slot || state.selectedSlot)}</strong></div></div>
     <div class="notice" style="text-align:left"><strong>Check in at the washer.</strong><br>You must scan its QR code within 5 minutes of your booking time.</div>
-    <button class="btn btn-green btn-block" data-action="scan-qr">Simulate QR check-in</button><button class="text-button" style="margin-top:12px" data-route="my-laundry">Go to My Laundry</button></section>`,
+    <div class="action-stack"><button class="btn btn-green btn-block" data-action="scan-qr">Simulate QR check-in</button><button class="btn btn-soft btn-block" data-route="my-laundry">Go to My Laundry</button></div></section>`,
 
   checkin: () => `<section class="screen center"><div class="success-mark">✓</div><p class="eyebrow">Check-in successful</p><h1>${esc(state.booking?.machine || 'Washer 2')} is yours.</h1><p class="subtle">The machine QR matched your reservation. Load your clothes and start when ready.</p>
-    <div class="washer-art"><div class="washer-door"></div></div><button class="btn btn-green btn-block" data-action="start-laundry">Start laundry · 39 min</button></section>`,
+    <div class="washer-art"><div class="washer-door"></div></div><button class="btn btn-green btn-block" data-route="payment">Continue to payment</button></section>`,
 
-  session: () => `<section class="screen center"><p class="eyebrow">Laundry in progress</p><h1>${esc(state.booking?.machine || 'Washer 2')}</h1><p class="subtle">University Dorm A</p><div class="washer-art"><div class="washer-door"></div></div>
+  payment: () => paymentScreen(),
+
+  session: () => `<section class="screen center"><p class="eyebrow">Laundry in progress</p><h1>${esc(state.booking?.machine || 'Washer 2')}</h1><p class="subtle">${esc(state.booking?.location || selectedLocation().name)}</p><div class="washer-art"><div class="washer-door"></div></div>
     <div class="timer" id="sessionTimer">${formatTime(state.sessionSeconds)}</div><p class="subtle">Estimated finish · 7:48 PM</p><div class="progress"><i id="sessionProgress" style="width:${Math.max(4,100-state.sessionSeconds/(39*60)*100)}%"></i></div>
     <button class="btn btn-soft btn-block" style="margin-top:28px" data-action="finish-session">Finish early</button></section>`,
 
   'my-laundry': () => `<section class="screen"><p class="eyebrow">Your activity</p><h1>My Laundry</h1>
-    ${state.sessionStarted ? `<div class="section-head"><h2>Active laundry</h2></div><div class="plain-card"><div class="row"><div><h3>${esc(state.booking?.machine || 'Washer 2')}</h3><span class="subtle">University Dorm A</span></div><span class="status occupied">In progress</span></div><button class="btn btn-primary btn-block" style="margin-top:15px" data-route="session">View timer</button></div>` : ''}
+    ${state.sessionStarted ? `<div class="section-head"><h2>Active laundry</h2></div><div class="plain-card"><div class="row"><div><h3>${esc(state.booking?.machine || 'Washer 2')}</h3><span class="subtle">${esc(state.booking?.location || selectedLocation().name)}</span></div><span class="status occupied">In progress</span></div><button class="btn btn-primary btn-block" style="margin-top:15px" data-route="session">View timer</button></div>` : ''}
     <div class="section-head"><h2>Upcoming</h2></div>${state.booking ? `<div class="plain-card"><div class="row"><div><h3>${esc(state.booking.machine)}</h3><span class="subtle">Today · ${esc(state.booking.slot)}</span></div><span class="status reserved">Booked</span></div><div class="row" style="margin-top:14px"><button class="btn btn-soft" data-route="confirmation">View booking</button><button class="text-button" data-action="cancel-booking">Cancel</button></div></div>` : `<div class="plain-card center subtle">No upcoming bookings yet.</div>`}
     <div class="section-head"><h2>History</h2></div><div class="plain-card"><div class="history-row"><strong>Aug 18</strong><span>Washer 2</span><span class="status available">Done</span></div><div class="history-row"><strong>Aug 16</strong><span>Washer 4</span><span class="status available">Done</span></div><div class="history-row"><strong>Aug 13</strong><span>Washer 1</span><span class="status occupied">No-show</span></div><div class="history-row"><strong>Aug 10</strong><span>Washer 3</span><span class="subtle">Cancelled</span></div></div></section>`,
 
@@ -107,7 +135,40 @@ const screens = {
 };
 
 function machineCard(m) {
-  return `<article class="machine-card"><div class="machine-top"><div><h3>${m.name}</h3><span class="status ${m.status}">${statusLabel(m.status)}</span></div>${m.status==='available'?`<button class="btn btn-primary" data-route="book">Book</button>`:''}</div><div class="machine-detail">${m.detail}</div></article>`;
+  return `<article class="machine-card" data-machine-id="${m.id}" role="button" tabindex="0" aria-label="View ${m.name}, ${statusLabel(m.status)}"><div class="machine-top"><div><h3>${m.name}</h3><span class="status ${m.status}">${statusLabel(m.status)}</span></div><span class="machine-arrow">→</span></div><div class="machine-detail">${m.detail}</div></article>`;
+}
+
+function machineDetailScreen() {
+  const location = selectedLocation();
+  const roomMachines = selectedMachines();
+  const machine = roomMachines.find(m => m.id === state.selectedMachineId) || roomMachines[0];
+  const isWasher = machine.type === 'washer';
+  const action = machine.status === 'available'
+    ? `<button class="btn btn-green btn-block" data-action="use-now">Use ${machine.name} now</button>`
+    : machine.status === 'occupied'
+      ? `<button class="btn btn-primary btn-block" data-action="join-queue">Join queue for a washer</button>`
+      : machine.status === 'reserved'
+        ? `<button class="btn btn-soft btn-block" disabled>Reserved for another resident</button>`
+        : `<button class="btn btn-soft btn-block" disabled>Currently unavailable</button>`;
+  return `<section class="screen center"><p class="eyebrow">${location.name} · ${isWasher ? 'Washing machine' : 'Dryer'}</p><h1>${machine.name}</h1><span class="status ${machine.status}">${statusLabel(machine.status)}</span>
+    <div class="washer-art ${isWasher ? '' : 'dryer-art'}"><div class="washer-door"></div></div>
+    <div class="plain-card machine-summary"><div class="row"><span class="subtle">Current status</span><strong>${statusLabel(machine.status)}</strong></div><div class="row"><span class="subtle">Timing</span><strong>${machine.detail}</strong></div><div class="row"><span class="subtle">Location</span><strong>${location.address}</strong></div></div>
+    <div class="action-stack">${action}<button class="btn btn-soft btn-block" data-action="back-to-room">View all machines</button></div></section>`;
+}
+
+function paymentScreen() {
+  const machine = selectedMachines().find(m => m.name === state.booking?.machine);
+  const price = machine?.type === 'dryer' ? 50 : 40;
+  const methods = [
+    { id: 'promptpay', icon: '◉', title: 'PromptPay', detail: 'Scan a QR code to pay' },
+    { id: 'card', icon: '▣', title: 'Credit or debit card', detail: 'Visa, Mastercard or JCB' },
+    { id: 'wallet', icon: '◫', title: 'Campus wallet', detail: 'Balance ฿125.00' }
+  ];
+  return `<section class="screen payment-screen"><p class="eyebrow">Secure checkout</p><h1>Select payment method</h1><p class="subtle">Choose how you want to pay before starting the machine.</p>
+    <div class="plain-card payment-summary"><div><span class="subtle">${esc(state.booking?.location || selectedLocation().name)}</span><h3>${esc(state.booking?.machine || 'Washer')}</h3></div><strong>฿${price}.00</strong></div>
+    <div class="payment-methods">${methods.map(method=>`<button class="payment-method ${state.paymentMethod===method.id?'selected':''}" data-payment="${method.id}"><span class="payment-icon">${method.icon}</span><span><strong>${method.title}</strong><small>${method.detail}</small></span><i>${state.paymentMethod===method.id?'✓':''}</i></button>`).join('')}</div>
+    <div class="notice">This is a prototype payment. No real charge will be made.</div>
+    <button class="btn btn-green btn-block payment-submit" data-action="confirm-payment" ${state.paymentMethod?'':'disabled'}>${state.paymentMethod ? `Pay ฿${price}.00 and start laundry` : 'Select a payment method'}</button></section>`;
 }
 
 function claimScreen() {
@@ -122,9 +183,18 @@ function adminScreen() {
   </section>`;
 }
 
-function navigate(route) {
-  if (state.route !== route) state.previous = state.route === 'welcome' ? 'home' : state.route;
+function navigate(route, options = {}) {
+  if (state.route === route) { render(); return; }
+  if (options.reset) state.history = [];
+  else if (!options.replace && state.route !== 'welcome') state.history.push(state.route);
   state.route = route;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack(fallback = 'home') {
+  const target = state.history.pop() || fallback;
+  state.route = target;
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -133,8 +203,8 @@ function render() {
   const isWelcome = state.route === 'welcome';
   const isAdmin = state.route === 'admin';
   topbar.classList.toggle('hidden', isWelcome);
-  bottomNav.classList.toggle('hidden', isWelcome || isAdmin || ['queue','book','confirmation','checkin','session','room'].includes(state.route));
-  backButton.classList.toggle('hidden', !['room','queue','book','confirmation','checkin','session'].includes(state.route));
+  bottomNav.classList.toggle('hidden', isWelcome || isAdmin || ['queue','book','confirmation','checkin','payment','session','room','machine'].includes(state.route));
+  backButton.classList.toggle('hidden', !['room','machine','queue','book','confirmation','checkin','payment','session'].includes(state.route));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.route === state.route));
   app.innerHTML = (screens[state.route] || screens.home)();
   if (state.route === 'session' && state.sessionStarted) startSessionTimer();
@@ -151,31 +221,37 @@ function startSessionTimer() { clearInterval(sessionInterval); sessionInterval =
 
 document.addEventListener('click', e => {
   const route = e.target.closest('[data-route]')?.dataset.route; if (route) { e.preventDefault(); navigate(route); return; }
-  const location = e.target.closest('[data-location]'); if(location){ navigate('room'); return; }
+  const location = e.target.closest('[data-location]'); if(location){state.selectedLocationId=location.dataset.location;const firstMachine=selectedMachines()[0];state.selectedMachineId=firstMachine.id;state.selectedMachine=firstMachine.name;state.machineTab='washer';state.joinedQueue=false;state.claimReady=false;navigate('room');return;}
+  const machine = e.target.closest('[data-machine-id]'); if(machine){state.selectedMachineId=Number(machine.dataset.machineId);const chosenMachine=selectedMachines().find(m=>m.id===state.selectedMachineId)||selectedMachines()[0];state.selectedMachine=chosenMachine.name;if(chosenMachine.status==='available'){state.paymentMethod=null;state.booking={machine:chosenMachine.name,location:selectedLocation().name,slot:'Available now'};navigate('checkin');}else{navigate('machine');}return;}
   const tab = e.target.closest('[data-tab]')?.dataset.tab; if(tab){ state.machineTab=tab; render(); return; }
   const slot = e.target.closest('[data-slot]')?.dataset.slot; if(slot){ state.selectedSlot=slot; render(); return; }
+  const payment = e.target.closest('[data-payment]')?.dataset.payment; if(payment){state.paymentMethod=payment;render();return;}
   const adminTab = e.target.closest('[data-admin-tab]')?.dataset.adminTab; if(adminTab){state.adminTab=adminTab;render();return;}
   const action = e.target.closest('[data-action]')?.dataset.action; if(!action) return;
   const actions = {
-    enter:()=>navigate('home'),
+    enter:()=>navigate('home',{reset:true}),
     'join-queue':()=>{state.joinedQueue=true;navigate('queue');},
     'leave-queue':()=>{state.joinedQueue=false;state.claimReady=false;showToast('You left the queue');navigate('room');},
     'simulate-ready':()=>{state.claimReady=true;render();showToast('Washer 2 is ready — you’re next!');},
-    'claim-machine':()=>{state.booking={machine:'Washer 2',slot:'Now · claim by 7:13 PM'};state.joinedQueue=false;navigate('confirmation');},
-    'confirm-booking':()=>{state.selectedMachine=document.querySelector('#machineSelect')?.value||'Washer 4';state.booking={machine:state.selectedMachine,slot:state.selectedSlot};navigate('confirmation');},
+    'claim-machine':()=>{state.paymentMethod=null;state.booking={machine:'Washer 2',location:selectedLocation().name,slot:'Now · claim by 7:13 PM'};state.joinedQueue=false;navigate('confirmation');},
+    'use-now':()=>{const chosenMachine=selectedMachines().find(m=>m.id===state.selectedMachineId)||selectedMachines()[0];state.paymentMethod=null;state.booking={machine:chosenMachine.name,location:selectedLocation().name,slot:'Available now'};navigate('checkin');},
+    'back-to-room':()=>goBack('room'),
+    'confirm-booking':()=>{state.paymentMethod=null;state.selectedMachine=document.querySelector('#machineSelect')?.value||'Washer 4';state.booking={machine:state.selectedMachine,location:selectedLocation().name,slot:state.selectedSlot};navigate('confirmation');},
     'scan-qr':()=>navigate('checkin'),
     'start-laundry':()=>{state.sessionStarted=true;navigate('session');},
-    'finish-session':()=>{state.sessionStarted=false;state.booking=null;state.sessionSeconds=38*60+42;clearInterval(sessionInterval);showToast('Session finished. Washer is available again.');navigate('my-laundry');},
+    'confirm-payment':()=>{if(!state.paymentMethod)return;state.sessionStarted=true;showToast('Payment approved — laundry started');navigate('session');},
+    'finish-session':()=>{state.sessionStarted=false;state.booking=null;state.paymentMethod=null;state.sessionSeconds=38*60+42;clearInterval(sessionInterval);showToast('Session finished. Washer is available again.');navigate('my-laundry');},
     'cancel-booking':()=>{state.booking=null;showToast('Booking cancelled');render();},
     'read-all':()=>{document.querySelectorAll('.notification-card').forEach(n=>n.classList.remove('unread'));document.querySelector('.nav-dot')?.classList.add('hidden');showToast('All updates marked as read');},
     'simulate-noshow':()=>{state.warnings=Math.min(3,state.warnings+1);showToast(state.warnings===3?'Booking suspended for 7 days':'No-show warning added');render();},
-    logout:()=>navigate('welcome'),
+    logout:()=>navigate('welcome',{reset:true}),
     'exit-admin':()=>navigate('home'),
     'remove-suspension':()=>showToast('Suspension removed for User 3011')
   }; actions[action]?.();
 });
 
 document.addEventListener('change', e => { if(e.target.matches('[data-machine-status]')){const i=Number(e.target.dataset.machineStatus);machines[i].status=e.target.value;machines[i].detail=`Status changed by admin`;showToast(`${machines[i].name} set to ${statusLabel(e.target.value)}`);}});
-backButton.addEventListener('click',()=>navigate(state.previous === 'welcome' ? 'home' : state.previous));
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-machine-id]')) { e.preventDefault(); e.target.click(); } });
+backButton.addEventListener('click',()=>goBack());
 document.querySelector('#adminButton').addEventListener('click',()=>navigate('admin'));
 render();
