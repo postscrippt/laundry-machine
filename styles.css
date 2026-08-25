@@ -53,6 +53,24 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .quick-stat { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 12px; }
 .quick-stat strong { font-size: 20px; display: block; color: var(--lime); }
 .quick-stat span { font-size: 12px; color: #c8cec9; }
+.home-status-heading { margin-top: 25px; }
+.home-status-card { width: 100%; border: 1px solid #cbd9f0; border-left: 5px solid #3977c3; border-radius: 20px; background: #f1f6ff; padding: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; transition: .18s ease; }
+.home-status-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.home-status-card h3 { margin: 6px 0 4px; }
+.home-status-card p { margin: 0; color: var(--muted); font-size: 13px; }
+.home-status-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 11px; }
+.home-status-actions, .booking-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.booking-card-actions { margin-top: 14px; }
+.status-confirm-button { min-height: 34px; border: 0; border-radius: 10px; background: #2563a9; color: white; padding: 0 13px; font-size: 12px; font-weight: 800; cursor: pointer; }
+.ready-status { border-color: #a7d7bd; border-left-color: var(--green); background: var(--green-soft); }
+.ready-status .queue-type { background: #d2efdf; color: var(--green-dark); }
+.home-status-type { display: inline-flex; border-radius: 99px; background: #dceaff; color: #255b9c; padding: 5px 9px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+.queue-status { border-color: #f0d69b; border-left-color: var(--yellow); background: #fffbef; }
+.queue-type { background: var(--yellow-soft); color: #8b5c00; }
+.queue-claim-status { border-color: #b9dfcb; border-left-color: var(--green); background: var(--green-soft); }
+.immediate-status { border-color: #b9dfcb; border-left-color: var(--green); background: var(--green-soft); }
+.active-status { border-color: #b9dfcb; border-left-color: var(--green); background: var(--green-soft); }
+.active-type { background: #d4f2e1; color: var(--green-dark); }
 .location-list, .machine-list, .notification-list { display: grid; gap: 12px; }
 .location-card, .machine-card, .plain-card, .notification-card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 17px; box-shadow: 0 4px 16px rgba(24,35,28,.03); }
 .location-card, .machine-card { cursor: pointer; transition: .2s ease; }
@@ -67,6 +85,8 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .available { background: var(--green-soft); color: var(--green-dark); }
 .occupied { background: var(--red-soft); color: var(--red); }
 .reserved { background: var(--yellow-soft); color: #9a6500; }
+.reserved-for-you { background: #e8f1ff; color: #2563a9; }
+.reserved-for-you:before { content: "✓"; width: auto; height: auto; background: none; border-radius: 0; font-size: 11px; line-height: 1; }
 .maintenance { background: var(--gray-soft); color: #727a72; }
 .btn { border: 0; border-radius: 15px; min-height: 48px; padding: 0 18px; font-weight: 700; cursor: pointer; transition: .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn:hover { transform: translateY(-1px); }
@@ -81,6 +101,9 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .queue-actions { margin-top: 16px; }
 .machine-card .btn { min-height: 38px; border-radius: 12px; }
 .machine-detail { color: var(--muted); font-size: 13px; margin-top: 9px; }
+.cancel-link { border: 0; background: none; color: var(--red); padding: 5px 0; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.machine-card > .cancel-link { margin-top: 10px; }
+.cancel-text { color: var(--red); }
 .machine-arrow { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 11px; background: var(--gray-soft); display: grid; place-items: center; font-weight: 700; }
 .machine-card:focus-visible { outline: 3px solid rgba(31,157,99,.3); outline-offset: 3px; }
 .machine-summary { display: grid; gap: 0; margin: 22px 0 10px; text-align: left; }
@@ -103,6 +126,16 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .payment-method:not(.selected) i { background: var(--gray-soft); }
 .payment-icon { width: 44px; height: 44px; border-radius: 13px; background: var(--gray-soft); display: grid !important; place-items: center; font-weight: 800; }
 .payment-submit { margin-top: 12px; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(16,28,20,.55); backdrop-filter: blur(5px); animation: enter .18s ease; }
+.ready-popup { width: min(440px,100%); position: relative; border-radius: 24px; background: white; padding: 30px; text-align: center; box-shadow: 0 25px 70px rgba(10,20,14,.24); }
+.ready-popup-icon { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center; background: var(--green-soft); color: var(--green); font-size: 28px; font-weight: 800; }
+.ready-popup h2 { margin-bottom: 10px; }
+.ready-popup .action-stack { margin-top: 22px; }
+.modal-close { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--gray-soft); color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.cancel-backdrop { z-index: 90; }
+.cancel-popup { width: min(380px,100%); border-radius: 21px; background: white; padding: 26px; text-align: center; box-shadow: 0 25px 70px rgba(10,20,14,.24); }
+.cancel-popup h2 { margin-bottom: 20px; }
+.cancel-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tabs { padding: 4px; border-radius: 14px; background: #e8ebe5; display: flex; margin: 18px 0; }
 .tab { flex: 1; border: 0; background: transparent; padding: 10px; border-radius: 11px; font-weight: 700; color: var(--muted); cursor: pointer; }
 .tab.active { background: white; color: var(--ink); box-shadow: 0 2px 7px rgba(0,0,0,.06); }
@@ -128,6 +161,8 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .countdown-big { font: 800 48px "Manrope"; letter-spacing: -2px; margin: 10px 0; }
 .form-label { font-size: 12px; font-weight: 700; display: block; margin: 19px 0 8px; }
 .select { width: 100%; height: 52px; border: 1px solid var(--line); border-radius: 14px; background: white; padding: 0 14px; color: var(--ink); outline: none; }
+.input { width: 100%; height: 52px; border: 1px solid var(--line); border-radius: 14px; background: white; padding: 0 14px; color: var(--ink); outline: none; }
+.input:focus, .select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,157,99,.12); }
 .slots { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; }
 .slot { min-width: 0; border: 1px solid var(--line); background: white; border-radius: 13px; padding: 12px 8px; cursor: pointer; font-weight: 600; }
 .slot.selected { background: var(--ink); color: white; border-color: var(--ink); }
@@ -158,6 +193,9 @@ h3 { font: 700 16px/1.25 "Manrope", sans-serif; }
 .menu-list { background: white; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; margin-top: 18px; }
 .menu-row { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: white; padding: 16px; display: flex; justify-content: space-between; cursor: pointer; }
 .menu-row:last-child { border: 0; }
+.profile-form-screen { max-width: 720px; }
+.profile-form { margin-top: 24px; }
+.profile-form-actions { margin-top: 24px; }
 .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 30; width: 100%; min-height: 78px; height: calc(70px + env(safe-area-inset-bottom)); padding: 8px max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: rgba(255,255,255,.96); border-top: 1px solid var(--line); display: flex; justify-content: space-around; backdrop-filter: blur(15px); }
 .nav-item { position: relative; flex: 1; border: 0; background: none; color: #8a928b; border-radius: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
 .nav-item span { font-size: 20px; line-height: 1; }
